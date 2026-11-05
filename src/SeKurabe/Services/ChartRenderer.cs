@@ -129,17 +129,18 @@ public static class ChartRenderer
         // 頭頂の点線をキャラの後ろに通す場合は、キャラより先に描く
         if (s.ShowHeadLines && s.HeadLinesBehind) DrawHeadLines(c, s, l, chars, u);
 
-        // キャラ（一覧の順に奥から）
+        // キャラ（一覧の順に奥から）。どこに絵があるかを「絵の地図」に記録しておき、札を置く場所の判断に使う
+        using var occ = new Occupancy(W, H);
         foreach (var ch in chars)
         {
             ct.ThrowIfCancellationRequested();
-            var rect = DrawCharacter(c, s, l, ch, src, u, fast);
+            var rect = DrawCharacter(c, s, l, ch, src, u, fast, occ);
             if (rect is { } r) l.CharRects[ch.Id] = r;
         }
 
         if (s.ShowHeadLines && !s.HeadLinesBehind) DrawHeadLines(c, s, l, chars, u);
 
-        DrawHeightLabels(c, s, l, chars, u, text);
+        DrawHeightLabels(c, s, l, chars, u, text, occ);
         if (s.ShowNames) DrawNames(c, s, l, chars, u, text);
         c.Flush();
         return (bmp, l);
@@ -262,7 +263,7 @@ public static class ChartRenderer
         return SKRect.Create(cx - w / 2, footY - (float)((ch.GroundY - ch.Opaque.Top) * k), w, h);
     }
 
-    static SKRect? DrawCharacter(SKCanvas c, ChartSettings s, ChartLayout l, CharData ch, ICharImageSource src, double u, bool fast)
+    static SKRect? DrawCharacter(SKCanvas c, ChartSettings s, ChartLayout l, CharData ch, ICharImageSource src, double u, bool fast, Occupancy occ)
     {
         if (CharRect(l, ch) is not { } dst) return null;
         double k = l.Scale / ch.PxPerCm;
@@ -293,6 +294,8 @@ public static class ChartRenderer
 
         using (part)
         {
+            occ.Add(part, dst, ch.Flip, cx);
+            occ.Heads[ch.Id] = HeadSpan(part, dst, ch, l, cx);
             c.Save();
             if (ch.Flip) c.Scale(-1, 1, cx, 0);
             float x = (float)Math.Round(left), y = (float)Math.Round(top);
@@ -319,78 +322,179 @@ public static class ChartRenderer
         public required CharData Char;
         public required string Text;
         public SKRect Rect;
-        public float AnchorY;
     }
 
-    static void DrawHeightLabels(SKCanvas c, ChartSettings s, ChartLayout l, IReadOnlyList<CharData> chars, double u, SKColor text)
+    /// <summary>
+    /// 描いた絵がどこにあるかの地図（1/4 の大きさのアルファだけの画像）。
+    /// 身長の札を、ほかのキャラや自分の顔に重ならない場所へ置くのに使う。
+    /// </summary>
+    sealed class Occupancy : IDisposable
+    {
+        const int Div = 4;
+        readonly SKBitmap _mask;
+        readonly SKCanvas _canvas;
+        public readonly Dictionary<string, (float Left, float Right)> Heads = new();
+
+        public Occupancy(int w, int h)
+        {
+            _mask = new SKBitmap(new SKImageInfo(Math.Max(1, w / Div), Math.Max(1, h / Div), SKColorType.Alpha8, SKAlphaType.Premul));
+            _canvas = new SKCanvas(_mask);
+            _canvas.Clear(SKColors.Transparent);
+        }
+
+        public void Add(SKBitmap part, SKRect dst, bool flip, float cx)
+        {
+            _canvas.Save();
+            _canvas.Scale(1f / Div);
+            if (flip) _canvas.Scale(-1, 1, cx, 0);
+            _canvas.DrawBitmap(part, dst);
+            _canvas.Restore();
+        }
+
+        /// <summary>矩形の中の絵の濃さの平均（0〜1）。</summary>
+        public unsafe float Coverage(SKRect r)
+        {
+            _canvas.Flush();
+            int x0 = Math.Max(0, (int)(r.Left / Div)), x1 = Math.Min(_mask.Width, (int)Math.Ceiling(r.Right / Div));
+            int y0 = Math.Max(0, (int)(r.Top / Div)), y1 = Math.Min(_mask.Height, (int)Math.Ceiling(r.Bottom / Div));
+            if (x1 <= x0 || y1 <= y0) return 0;
+            byte* p = (byte*)_mask.GetPixels();
+            int stride = _mask.RowBytes;
+            long sum = 0;
+            for (int y = y0; y < y1; y++)
+                for (int x = x0; x < x1; x++) sum += p[y * stride + x];
+            return sum / (255f * (x1 - x0) * (y1 - y0));
+        }
+
+        public void Dispose()
+        {
+            _canvas.Dispose();
+            _mask.Dispose();
+        }
+    }
+
+    /// <summary>頭の左右の端（出力ピクセル）。頭頂から身長の 1 割ほど下までの範囲で、絵がある幅を測る。</summary>
+    static unsafe (float Left, float Right) HeadSpan(SKBitmap part, SKRect dst, CharData ch, ChartLayout l, float cx)
+    {
+        float headY = (float)l.ToPxY(ch.Lift + ch.HeightCm);
+        int r0 = Math.Clamp((int)(headY - dst.Top), 0, part.Height - 1);
+        int r1 = Math.Clamp((int)(headY - dst.Top + ch.HeightCm * 0.1 * l.Scale), r0 + 1, part.Height);
+        byte* p = (byte*)part.GetPixels();
+        int stride = part.RowBytes, minX = int.MaxValue, maxX = -1;
+        for (int y = r0; y < r1; y += 2)
+        {
+            byte* row = p + y * stride;
+            for (int x = 0; x < part.Width; x++)
+                if (row[x * 4 + 3] > 96) { if (x < minX) minX = x; break; }
+            for (int x = part.Width - 1; x >= 0; x--)
+                if (row[x * 4 + 3] > 96) { if (x > maxX) maxX = x; break; }
+        }
+        if (maxX < 0) return (dst.Left, dst.Right);
+        float left = dst.Left + minX, right = dst.Left + maxX + 1;
+        // 左右反転していれば、中心で折り返す
+        return ch.Flip ? (2 * cx - right, 2 * cx - left) : (left, right);
+    }
+
+    static void DrawHeightLabels(SKCanvas c, ChartSettings s, ChartLayout l, IReadOnlyList<CharData> chars, double u, SKColor text, Occupancy occ)
     {
         float fontSize = (float)(24 * u);
-        using var font = Fonts.Make(s.Font, true, fontSize, "0123456789cm′″/ ");
-        var labels = new List<Label>();
+        using var font = Fonts.Make(s.Font, true, fontSize, "0123456789cm'\"/ ");
+        float padX = fontSize * 0.55f, pillH = fontSize * 1.55f, gap = (float)(8 * u);
+        var placed = new List<Label>();
+        var leftRuler = s.RulerSide is "left" or "both";
+        var rightRuler = s.RulerSide is "right" or "both";
 
-        foreach (var ch in chars)
+        // 置き場所の候補の中から、絵やほかの札に重ならず、頭に近い場所を選ぶ
+        float Score(SKRect r, float prefX, float prefY)
+        {
+            if (r.Left < 2 || r.Right > l.Width - 2 || r.Top < 2 || r.Bottom > l.GroundPx) return float.MaxValue;
+            float score = occ.Coverage(r) * 12;
+            foreach (var o in placed)
+            {
+                var i = SKRect.Intersect(r, o.Rect);
+                if (!i.IsEmpty) score += 30 + i.Width * i.Height / (r.Width * r.Height) * 30;
+            }
+            // 定規の数字にかぶらないように
+            if (leftRuler && r.Left < l.ChartLeft + 4) score += 5;
+            if (rightRuler && r.Right > l.ChartRight - 4) score += 5;
+            score += Math.Abs(r.MidX - prefX) / l.Width * 2.5f + Math.Abs(r.MidY - prefY) / l.Height * 4f;
+            return score;
+        }
+
+        // 背の高い（上にいる）キャラから順に置く
+        foreach (var ch in chars.OrderBy(ch => l.ToPxY(ch.Lift + ch.HeightCm)))
         {
             if (!ch.ShowLabel || !l.CharRects.TryGetValue(ch.Id, out var rect)) continue;
             var col = Col(ch.Color, SKColors.Gray);
             float headY = (float)l.ToPxY(ch.Lift + ch.HeightCm);
             float footY = (float)l.ToPxY(ch.Lift);
             var label = Units.Format(ch.HeightCm, s.Unit);
-            float tw = font.MeasureText(label);
-            float padX = fontSize * 0.55f, pillH = fontSize * 1.55f;
-            float pillW = tw + padX * 2;
+            float pillW = font.MeasureText(label) + padX * 2;
+            var (headL, headR) = occ.Heads.GetValueOrDefault(ch.Id, (rect.Left, rect.Right));
+            var cands = new List<SKRect>();
+            float prefX, prefY;
 
             if (ch.Floating)
             {
                 // 浮いているキャラは、足元から頭頂までの寸法線で示す（定規の目盛りと混同しないように）
-                float bx = rect.Right + (float)(10 * u);
+                // 寸法線は絵の右か左の、空いている側に置く
+                float bxR = rect.Right + (float)(10 * u), bxL = rect.Left - (float)(10 * u);
+                float midY = (headY + footY) / 2;
+                var lineR = SKRect.Create(bxR - 4, headY, 8, footY - headY);
+                var lineL = SKRect.Create(bxL - 4, headY, 8, footY - headY);
+                bool right = occ.Coverage(lineR) <= occ.Coverage(lineL) + 0.05f || bxL < l.ChartLeft;
+                float bx = right ? bxR : bxL;
                 using var lp = new SKPaint { Color = col, StrokeWidth = (float)Math.Max(1, 2.4 * u), IsAntialias = true, StrokeCap = SKStrokeCap.Round };
                 float cap = (float)(7 * u);
                 c.DrawLine(bx, headY, bx, footY, lp);
                 c.DrawLine(bx - cap, headY, bx + cap, headY, lp);
                 c.DrawLine(bx - cap, footY, bx + cap, footY, lp);
+                prefX = right ? bx + gap + pillW / 2 : bx - gap - pillW / 2;
+                prefY = midY;
+                foreach (var dy in new[] { 0f, -pillH, pillH, (headY - midY), (footY - midY) })
+                {
+                    cands.Add(SKRect.Create(bx + gap * 1.5f, midY + dy - pillH / 2, pillW, pillH));
+                    cands.Add(SKRect.Create(bx - gap * 1.5f - pillW, midY + dy - pillH / 2, pillW, pillH));
+                }
+                cands.Add(SKRect.Create((headL + headR) / 2 - pillW / 2, headY - pillH - gap, pillW, pillH));
+            }
+            else if (s.LabelPlacement == "above")
+            {
+                float hx = (headL + headR) / 2;
+                float top = Math.Min(headY, rect.Top) - pillH - gap;
+                prefX = hx; prefY = top + pillH / 2;
+                foreach (var y in new[] { top, headY - pillH - gap, top - pillH - gap })
+                    foreach (var dx in new[] { 0f, -0.6f, 0.6f, -1.2f, 1.2f })
+                        cands.Add(SKRect.Create(hx - pillW / 2 + dx * pillW, y, pillW, pillH));
+            }
+            else
+            {
+                // 点線の上（頭のすぐ右が第一候補）。点線と同じ色なので、少し離れても誰の身長か分かる
+                prefX = headR + gap + pillW / 2;
+                prefY = headY;
+                var ys = new[] { headY - pillH / 2, headY - pillH - gap * 0.5f };
+                var xs = new List<float> { headR + gap, headL - gap - pillW, (float)l.ChartLeft + gap, (float)l.ChartRight - gap - pillW };
+                for (int i = 0; i <= 12; i++)
+                    xs.Add((float)(l.ChartLeft + gap + (l.ChartRight - l.ChartLeft - pillW - gap * 2) * i / 12.0));
+                foreach (var y in ys)
+                    foreach (var x in xs)
+                        cands.Add(SKRect.Create(x, y, pillW, pillH));
             }
 
-            SKRect pill;
-            if (ch.Floating)
-                pill = SKRect.Create(rect.Right + (float)(22 * u), (headY + footY) / 2 - pillH / 2, pillW, pillH);
-            else if (s.LabelPlacement == "above")
-                pill = SKRect.Create(rect.MidX - pillW / 2, Math.Min(headY, rect.Top) - pillH - (float)(10 * u), pillW, pillH);
-            else
-                pill = SKRect.Create(rect.Right + (float)(8 * u), headY - pillH / 2, pillW, pillH);
-            labels.Add(new Label { Char = ch, Text = label, Rect = pill, AnchorY = pill.MidY });
+            var best = cands.MinBy(r => Score(r, prefX, prefY));
+            placed.Add(new Label { Char = ch, Text = label, Rect = best });
         }
 
-        // 重なったラベルは上下にずらす（何度か繰り返して落ち着かせる）
-        for (int iter = 0; iter < 30; iter++)
-        {
-            bool moved = false;
-            for (int i = 0; i < labels.Count; i++)
-                for (int j = i + 1; j < labels.Count; j++)
-                {
-                    var a = labels[i].Rect; var b = labels[j].Rect;
-                    var ai = a; ai.Inflate(2, 2);
-                    if (!ai.IntersectsWith(b)) continue;
-                    float overlap = Math.Min(a.Bottom, b.Bottom) - Math.Max(a.Top, b.Top) + (float)(4 * u);
-                    float half = overlap / 2;
-                    bool aAbove = a.MidY <= b.MidY;
-                    labels[i].Rect.Offset(0, aAbove ? -half : half);
-                    labels[j].Rect.Offset(0, aAbove ? half : -half);
-                    moved = true;
-                }
-            if (!moved) break;
-        }
-        // 画像の外に出ないように
-        foreach (var lb in labels)
-        {
-            var r = lb.Rect;
-            if (r.Right > l.Width - 4) r.Offset(l.Width - 4 - r.Right, 0);
-            if (r.Top < 4) r.Offset(0, 4 - r.Top);
-            lb.Rect = r;
-        }
-
-        foreach (var lb in labels)
+        foreach (var lb in placed)
         {
             var col = Col(lb.Char.Color, SKColors.Gray);
+            // 札のまわりに背景色のふちを付けて、下の絵や線から浮かせる
+            using (var halo = new SKPaint { Color = Col(s.BgColor, SKColors.White).WithAlpha(200), IsAntialias = true })
+            {
+                var hr = lb.Rect;
+                hr.Inflate((float)(2.5 * u), (float)(2.5 * u));
+                c.DrawRoundRect(hr, hr.Height / 2, hr.Height / 2, halo);
+            }
             using (var pp = new SKPaint { Color = col, IsAntialias = true })
                 c.DrawRoundRect(lb.Rect, lb.Rect.Height / 2, lb.Rect.Height / 2, pp);
             var fg = Luma(col) > 0.62f ? new SKColor(0x22, 0x22, 0x28) : SKColors.White;
