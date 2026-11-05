@@ -219,31 +219,49 @@
                     </Border>
                 </Border>
 
-                <!-- 調整の手順 -->
-                <Border Classes="floating" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,76,0,0" Padding="14,12" Width="270">
-                    <Border.IsVisible>
+                <!-- 調整の手順（開閉できる） -->
+                <Panel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16,76,0,0">
+                    <Panel.IsVisible>
                         <MultiBinding Converter="{x:Static BoolConverters.And}">
                             <Binding Path="IsCalibrate" />
                             <Binding Path="HasSelection" />
                         </MultiBinding>
-                    </Border.IsVisible>
-                    <StackPanel Spacing="10">
-                        <TextBlock FontWeight="SemiBold" Text="{Binding Selected.Name, FallbackValue=''}" TextTrimming="CharacterEllipsis" />
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Border Classes="step" Background="#2EB86E"><TextBlock Text="1" /></Border>
-                            <TextBlock Grid.Column="1" Classes="hint" Text="緑の線を足の裏に合わせます" />
-                        </Grid>
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Border Classes="step" Background="#F08A24"><TextBlock Text="2" /></Border>
-                            <TextBlock Grid.Column="1" Classes="hint" Text="橙の線を頭のてっぺんに。角・帽子・アホ毛は除きます" />
-                        </Grid>
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Border Classes="step" Background="{DynamicResource Accent}"><TextBlock Text="3" /></Border>
-                            <TextBlock Grid.Column="1" Classes="hint" Text="右のパネルで身長を入れます" />
-                        </Grid>
-                        <TextBlock Classes="muted" TextWrapping="Wrap" Text="線はドラッグ、または ↑↓ キー（Shift で 10px）。Tab で動かす線を切り替え。" />
-                    </StackPanel>
-                </Border>
+                    </Panel.IsVisible>
+                    <!-- 開いているとき -->
+                    <Border Classes="floating" Padding="14,10,8,12" Width="270" IsVisible="{Binding GuideExpanded}">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock FontWeight="SemiBold" Text="{Binding Selected.Name, FallbackValue=''}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Classes="ghost icon" Width="26" Height="26" Command="{Binding ToggleGuideCommand}" ToolTip.Tip="手順を閉じる">
+                                    <c:Icon Kind="chevron-up" Width="14" Height="14" />
+                                </Button>
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,6,0">
+                                <Border Classes="step" Background="#2EB86E"><TextBlock Text="1" /></Border>
+                                <TextBlock Grid.Column="1" Classes="hint" Text="緑の線を足の裏に合わせます" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,6,0">
+                                <Border Classes="step" Background="#F08A24"><TextBlock Text="2" /></Border>
+                                <TextBlock Grid.Column="1" Classes="hint" Text="橙の線を頭のてっぺんに。角・帽子・アホ毛は除きます" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,6,0">
+                                <Border Classes="step" Background="{DynamicResource Accent}"><TextBlock Text="3" /></Border>
+                                <TextBlock Grid.Column="1" Classes="hint" Text="右のパネルで身長を入れます" />
+                            </Grid>
+                            <TextBlock Classes="muted" TextWrapping="Wrap" Margin="0,0,6,0" Text="線はドラッグ、または ↑↓ キー（Shift で 10px）。Tab で動かす線を切り替え。" />
+                        </StackPanel>
+                    </Border>
+                    <!-- 閉じているとき（小さな札） -->
+                    <Button Classes="ghost" Padding="0" IsVisible="{Binding !GuideExpanded}" Command="{Binding ToggleGuideCommand}" ToolTip.Tip="手順を開く">
+                        <Border Classes="floating" Padding="12,7">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <c:Icon Kind="help" Width="14" Height="14" />
+                                <TextBlock Text="手順" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                <c:Icon Kind="chevron-down" Width="12" Height="12" />
+                            </StackPanel>
+                        </Border>
+                    </Button>
+                </Panel>
 
                 <!-- 通知 -->
                 <Border Classes="floating" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="14,12" Width="330" IsVisible="{Binding ToastVisible}">

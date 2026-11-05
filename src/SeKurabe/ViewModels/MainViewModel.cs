@@ -386,6 +386,36 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     void SetMode(string mode) => Mode = mode;
 
+    // ---- 調整の手順の開閉（アプリ全体の設定として覚えておく） ----
+
+    static string PrefsPath => Path.Combine(AppDir, "prefs.json");
+
+    sealed class Prefs
+    {
+        public bool GuideExpanded { get; set; } = true;
+    }
+
+    static Prefs LoadPrefs()
+    {
+        try { return JsonSerializer.Deserialize<Prefs>(File.ReadAllText(PrefsPath)) ?? new(); }
+        catch { return new(); }
+    }
+
+    [ObservableProperty] public partial bool GuideExpanded { get; set; } = LoadPrefs().GuideExpanded;
+
+    partial void OnGuideExpandedChanged(bool value)
+    {
+        try
+        {
+            Directory.CreateDirectory(AppDir);
+            File.WriteAllText(PrefsPath, JsonSerializer.Serialize(new Prefs { GuideExpanded = value }));
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    void ToggleGuide() => GuideExpanded = !GuideExpanded;
+
     // ---- ドラッグでの配置（画面から呼ぶ） ----
 
     public void BeginDrag()
