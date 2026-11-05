@@ -1,0 +1,363 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:SeKurabe.Controls">
+
+    <!-- ===== 文字 ===== -->
+    <Style Selector="TextBlock.title">
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+    <Style Selector="TextBlock.section">
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+    <Style Selector="TextBlock.body">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+    <Style Selector="TextBlock.caption">
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
+    </Style>
+    <Style Selector="TextBlock.num">
+        <Setter Property="FontFeatures" Value="+tnum" />
+    </Style>
+
+    <!-- ===== ボタン共通 ===== -->
+    <Style Selector="Button">
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusM}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <!-- 控えめなボタン（枠なし） -->
+    <Style Selector="Button.ghost">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="Padding" Value="8,6" />
+    </Style>
+    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+    <Style Selector="Button.ghost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource StrokeStrong}" />
+    </Style>
+
+    <!-- アイコンだけのボタン -->
+    <Style Selector="Button.icon">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- 二番手のボタン -->
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="{DynamicResource Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeStrong}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="Padding" Value="14,8" />
+    </Style>
+    <Style Selector="Button.secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeStrong}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <!-- 主ボタン -->
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{DynamicResource Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="16,9" />
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentHover}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnAccent}" />
+    </Style>
+    <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
+    </Style>
+
+    <!-- 危険な操作（文字だけ赤くなる） -->
+    <Style Selector="Button.ghost.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Foreground" Value="{DynamicResource Danger}" />
+        <Setter Property="Background" Value="{DynamicResource DangerSoft}" />
+    </Style>
+
+    <!-- ===== セグメントコントロール ===== -->
+    <Style Selector="Border.segmented">
+        <Setter Property="Background" Value="{DynamicResource SurfaceSunken}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusM}" />
+        <Setter Property="Padding" Value="2" />
+    </Style>
+    <Style Selector="Button.seg">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusS}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="0,5" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.seg:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+    <Style Selector="Button.seg.on /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface2}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BoxShadow" Value="0 1 2 0 #26000000" />
+    </Style>
+    <Style Selector="Button.seg.on">
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- ===== チップ（オン/オフ） ===== -->
+    <Style Selector="ToggleButton.chip">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="CornerRadius" Value="15" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ToggleButton.chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeStrong}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+    <Style Selector="ToggleButton.chip:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <!-- ===== 選択チップ（1 つだけ選ぶ） ===== -->
+    <Style Selector="Button.pick">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="CornerRadius" Value="15" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.pick:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeStrong}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+    <Style Selector="Button.pick.on /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <!-- ===== 設定の行 ===== -->
+    <Style Selector="TextBlock.field-label">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="CheckBox.row">
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="MinHeight" Value="28" />
+    </Style>
+    <Style Selector="ColorPicker">
+        <Setter Property="Width" Value="64" />
+        <Setter Property="Height" Value="30" />
+    </Style>
+
+    <!-- ===== 折りたたみの見出し ===== -->
+    <Style Selector="Expander.section">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0,4,0,8" />
+        <Setter Property="IsExpanded" Value="True" />
+    </Style>
+    <Style Selector="Expander.section /template/ ToggleButton#ExpanderHeader">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Expander.section /template/ Border#ExpanderContent">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0,4,0,6" />
+    </Style>
+
+    <!-- キャンバス上のツールバー内のトグル -->
+    <Style Selector="ToggleButton.tool">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusM}" />
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ToggleButton.tool:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+    <Style Selector="ToggleButton.tool:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentText}" />
+    </Style>
+
+    <!-- ===== 入力欄 ===== -->
+    <Style Selector="TextBox, NumericUpDown">
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusM}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="MinHeight" Value="30" />
+    </Style>
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{DynamicResource Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource StrokeStrong}" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <!-- 一覧の中で名前を編集する小さな入力欄 -->
+    <Style Selector="TextBox.rename">
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="Padding" Value="5,1" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusS}" />
+    </Style>
+    <!-- 無効時は灰色で塗りつぶさず、薄くするだけにする -->
+    <Style Selector="TextBox:disabled /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
+    </Style>
+    <Style Selector="TextBox:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="Button.seg:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.segmented:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="NumericUpDown.field">
+        <Setter Property="ShowButtonSpinner" Value="False" />
+        <Setter Property="FormatString" Value="0" />
+        <Setter Property="Increment" Value="1" />
+    </Style>
+    <Style Selector="TextBlock.inner">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="9,0,0,0" />
+    </Style>
+    <Style Selector="TextBlock.inner-right">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,9,0" />
+    </Style>
+
+    <!-- ===== バッジ ===== -->
+    <Style Selector="Border.badge">
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="6,1,7,1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.badge TextBlock">
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Border.badge.base">
+        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource AccentText}" />
+    </Style>
+    <Style Selector="Border.badge.warn">
+        <Setter Property="Background" Value="{DynamicResource WarningSoft}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource Warning}" />
+    </Style>
+    <Style Selector="Border.badge.error">
+        <Setter Property="Background" Value="{DynamicResource DangerSoft}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource Danger}" />
+    </Style>
+
+    <!-- ===== 素材リスト ===== -->
+    <Style Selector="ListBox.assets">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="8,0,8,8" />
+    </Style>
+    <Style Selector="ListBox.assets ListBoxItem">
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusL}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ListBox.assets ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3}" />
+    </Style>
+    <Style Selector="ListBox.assets ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    </Style>
+    <Style Selector="ListBox.assets ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    </Style>
+    <Style Selector="ListBox.assets ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    </Style>
+
+    <!-- ===== 浮いているパネル（キャンバス上のツールバー等） ===== -->
+    <Style Selector="Border.floating">
+        <Setter Property="Background" Value="{DynamicResource Surface2}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Stroke}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusL}" />
+        <Setter Property="BoxShadow" Value="0 6 24 0 #40000000" />
+    </Style>
+
+    <Style Selector="Separator.v">
+        <Setter Property="Width" Value="1" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Margin" Value="4,0" />
+        <Setter Property="Background" Value="{DynamicResource Stroke}" />
+    </Style>
+
+    <Style Selector="ProgressBar">
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="MinHeight" Value="6" />
+        <Setter Property="Height" Value="6" />
+    </Style>
+</Styles>

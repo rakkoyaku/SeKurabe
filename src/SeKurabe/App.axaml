@@ -1,0 +1,25 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SeKurabe.App"
+             Name="SeKurabe"
+             RequestedThemeVariant="Default">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/Themes/Tokens.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <!-- 標準コントロール（チェック・進捗など）のアクセント色をブランド色に揃える -->
+                <ColorPaletteResources x:Key="Light" Accent="#13897C" RegionColor="#FBFBFC" ErrorText="#D92D3A" />
+                <ColorPaletteResources x:Key="Dark" Accent="#3CC4B2" RegionColor="#1B1B20" ErrorText="#F2666E" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+        <StyleInclude Source="/Themes/Controls.axaml" />
+    </Application.Styles>
+</Application>
