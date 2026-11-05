@@ -18,6 +18,8 @@ public sealed partial class ChartSettings : ObservableObject
     [ObservableProperty] public partial string LabelPlacement { get; set; } = "side";
     /// <summary>頭頂から定規までの点線。</summary>
     [ObservableProperty] public partial bool ShowHeadLines { get; set; } = true;
+    /// <summary>頭頂の点線を、キャラの後ろに通す（キャラの体の上を横切らない）。</summary>
+    [ObservableProperty] public partial bool HeadLinesBehind { get; set; } = true;
     [ObservableProperty] public partial bool ShowNames { get; set; } = true;
     [ObservableProperty] public partial bool ShowNameHeight { get; set; }
 

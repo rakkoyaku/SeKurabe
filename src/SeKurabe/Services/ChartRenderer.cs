@@ -126,6 +126,9 @@ public static class ChartRenderer
         DrawRulers(c, s, l, u, text);
         ct.ThrowIfCancellationRequested();
 
+        // 頭頂の点線をキャラの後ろに通す場合は、キャラより先に描く
+        if (s.ShowHeadLines && s.HeadLinesBehind) DrawHeadLines(c, s, l, chars, u);
+
         // キャラ（一覧の順に奥から）
         foreach (var ch in chars)
         {
@@ -133,6 +136,8 @@ public static class ChartRenderer
             var rect = DrawCharacter(c, s, l, ch, src, u, fast);
             if (rect is { } r) l.CharRects[ch.Id] = r;
         }
+
+        if (s.ShowHeadLines && !s.HeadLinesBehind) DrawHeadLines(c, s, l, chars, u);
 
         DrawHeightLabels(c, s, l, chars, u, text);
         if (s.ShowNames) DrawNames(c, s, l, chars, u, text);
@@ -246,16 +251,23 @@ public static class ChartRenderer
 
     // ================= キャラ =================
 
-    static SKRect? DrawCharacter(SKCanvas c, ChartSettings s, ChartLayout l, CharData ch, ICharImageSource src, double u, bool fast)
+    /// <summary>立ち絵（絵の部分）を描く位置（出力ピクセル）。</summary>
+    static SKRect? CharRect(ChartLayout l, CharData ch)
     {
         if (ch.Opaque.Width <= 0 || ch.Opaque.Height <= 0) return null;
         double k = l.Scale / ch.PxPerCm;     // 出力ピクセル ÷ 元画像ピクセル
         float cx = (float)l.ToPxX(ch.X);
         float footY = (float)l.ToPxY(ch.Lift);
         float w = (float)(ch.Opaque.Width * k), h = (float)(ch.Opaque.Height * k);
-        float left = cx - w / 2;
-        float top = footY - (float)((ch.GroundY - ch.Opaque.Top) * k);
-        var dst = SKRect.Create(left, top, w, h);
+        return SKRect.Create(cx - w / 2, footY - (float)((ch.GroundY - ch.Opaque.Top) * k), w, h);
+    }
+
+    static SKRect? DrawCharacter(SKCanvas c, ChartSettings s, ChartLayout l, CharData ch, ICharImageSource src, double u, bool fast)
+    {
+        if (CharRect(l, ch) is not { } dst) return null;
+        double k = l.Scale / ch.PxPerCm;
+        float cx = dst.MidX;
+        float w = dst.Width, h = dst.Height, left = dst.Left, top = dst.Top;
 
         // 足元の影（地面に立っているときだけ）
         if (s.FootShadow && !ch.Floating)
@@ -327,22 +339,7 @@ public static class ChartRenderer
             float padX = fontSize * 0.55f, pillH = fontSize * 1.55f;
             float pillW = tw + padX * 2;
 
-            if (!ch.Floating)
-            {
-                // 頭頂から定規まで点線
-                if (s.ShowHeadLines)
-                {
-                    using var dash = new SKPaint
-                    {
-                        Color = col.WithAlpha(220), StrokeWidth = (float)Math.Max(1, 2.2 * u), IsAntialias = true,
-                        PathEffect = SKPathEffect.CreateDash([(float)(9 * u), (float)(7 * u)], 0),
-                    };
-                    float x0 = s.RulerSide is "left" or "both" ? (float)l.ChartLeft : rect.Left;
-                    float x1 = s.RulerSide is "right" or "both" ? (float)l.ChartRight : rect.Right;
-                    c.DrawLine(x0, headY, x1, headY, dash);
-                }
-            }
-            else
+            if (ch.Floating)
             {
                 // 浮いているキャラは、足元から頭頂までの寸法線で示す（定規の目盛りと混同しないように）
                 float bx = rect.Right + (float)(10 * u);
@@ -400,6 +397,25 @@ public static class ChartRenderer
             using var tp = new SKPaint { Color = fg, IsAntialias = true };
             font.MeasureText(lb.Text, out var tb);
             c.DrawText(lb.Text, lb.Rect.MidX, lb.Rect.MidY - tb.MidY, SKTextAlign.Center, font, tp);
+        }
+    }
+
+    /// <summary>地面に立つキャラの、頭頂から定規までの点線。</summary>
+    static void DrawHeadLines(SKCanvas c, ChartSettings s, ChartLayout l, IReadOnlyList<CharData> chars, double u)
+    {
+        foreach (var ch in chars)
+        {
+            if (!ch.ShowLabel || ch.Floating || CharRect(l, ch) is not { } rect) continue;
+            var col = Col(ch.Color, SKColors.Gray);
+            float headY = (float)l.ToPxY(ch.Lift + ch.HeightCm);
+            using var dash = new SKPaint
+            {
+                Color = col.WithAlpha(220), StrokeWidth = (float)Math.Max(1, 2.2 * u), IsAntialias = true,
+                PathEffect = SKPathEffect.CreateDash([(float)(9 * u), (float)(7 * u)], 0),
+            };
+            float x0 = s.RulerSide is "left" or "both" ? (float)l.ChartLeft : rect.Left;
+            float x1 = s.RulerSide is "right" or "both" ? (float)l.ChartRight : rect.Right;
+            c.DrawLine(x0, headY, x1, headY, dash);
         }
     }
 

@@ -408,6 +408,7 @@
                                     </Grid>
                                     <CheckBox Classes="row" IsChecked="{Binding Settings.ShowGrid}">横線を引く</CheckBox>
                                     <CheckBox Classes="row" IsChecked="{Binding Settings.ShowHeadLines}">頭頂から定規まで点線を引く</CheckBox>
+                                    <CheckBox Classes="row" IsChecked="{Binding Settings.HeadLinesBehind}" IsVisible="{Binding Settings.ShowHeadLines}" Margin="24,0,0,0">点線をキャラの後ろに通す</CheckBox>
                                     <Grid ColumnDefinitions="84,*" ColumnSpacing="8">
                                         <TextBlock Classes="field-label" Text="身長の位置" />
                                         <c:ChoiceField Grid.Column="1" Columns="2" Options="side=絵の横,above=絵の上" Value="{Binding Settings.LabelPlacement}" />
