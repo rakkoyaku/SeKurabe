@@ -388,30 +388,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     // ---- 調整の手順の開閉（アプリ全体の設定として覚えておく） ----
 
-    static string PrefsPath => Path.Combine(AppDir, "prefs.json");
+    [ObservableProperty] public partial bool GuideExpanded { get; set; } = ReadPrefs().GuideExpanded;
 
-    sealed class Prefs
-    {
-        public bool GuideExpanded { get; set; } = true;
-    }
-
-    static Prefs LoadPrefs()
-    {
-        try { return JsonSerializer.Deserialize<Prefs>(File.ReadAllText(PrefsPath)) ?? new(); }
-        catch { return new(); }
-    }
-
-    [ObservableProperty] public partial bool GuideExpanded { get; set; } = LoadPrefs().GuideExpanded;
-
-    partial void OnGuideExpandedChanged(bool value)
-    {
-        try
-        {
-            Directory.CreateDirectory(AppDir);
-            File.WriteAllText(PrefsPath, JsonSerializer.Serialize(new Prefs { GuideExpanded = value }));
-        }
-        catch { }
-    }
+    partial void OnGuideExpandedChanged(bool value) => WritePrefs();
 
     [RelayCommand]
     void ToggleGuide() => GuideExpanded = !GuideExpanded;

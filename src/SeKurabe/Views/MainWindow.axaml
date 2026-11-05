@@ -55,14 +55,21 @@
             <!-- ===================== キャラ一覧（左） ===================== -->
             <Border Grid.Column="0" Background="{DynamicResource Surface1}" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,1,1,0">
                 <DockPanel>
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="16,12,10,8">
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="16,12,10,8">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <TextBlock Classes="title" Text="キャラクター" />
                             <Border Background="{DynamicResource Surface3}" CornerRadius="9" Padding="7,1" VerticalAlignment="Center" IsVisible="{Binding HasCharacters}">
                                 <TextBlock Text="{Binding Characters.Count}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}" />
                             </Border>
                         </StackPanel>
-                        <Button Grid.Column="1" Classes="ghost icon" ToolTip.Tip="ファイル">
+                        <Panel Grid.Column="1">
+                            <Button Classes="ghost icon" Click="OnAbout" ToolTip.Tip="ソフトウェア情報・アップデート">
+                                <c:Icon Kind="info" />
+                            </Button>
+                            <Ellipse Width="8" Height="8" Fill="{DynamicResource Accent}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                     Margin="0,3,3,0" IsHitTestVisible="False" IsVisible="{Binding HasUpdateBanner}" />
+                        </Panel>
+                        <Button Grid.Column="2" Classes="ghost icon" ToolTip.Tip="ファイル">
                             <c:Icon Kind="menu" />
                             <Button.Flyout>
                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
@@ -77,10 +84,48 @@
                                 </MenuFlyout>
                             </Button.Flyout>
                         </Button>
-                        <Button Grid.Column="2" Classes="ghost icon" ToolTip.Tip="立ち絵を追加" Command="{Binding AddImagesCommand}">
+                        <Button Grid.Column="3" Classes="ghost icon" ToolTip.Tip="立ち絵を追加" Command="{Binding AddImagesCommand}">
                             <c:Icon Kind="plus" />
                         </Button>
                     </Grid>
+
+                    <!-- 更新のお知らせ -->
+                    <Border DockPanel.Dock="Top" Margin="12,0,12,8" Padding="12,10" CornerRadius="{StaticResource RadiusL}"
+                            Background="{DynamicResource AccentSoft}" IsVisible="{Binding HasUpdateBanner}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <c:Icon Kind="download" Foreground="{DynamicResource AccentText}" VerticalAlignment="Top" Margin="0,1,0,0" />
+                            <StackPanel Grid.Column="1" Spacing="6">
+                                <StackPanel Spacing="6" IsVisible="{Binding IsUpdateAvailable}">
+                                    <TextBlock FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap">
+                                        <Run Text="新しいバージョン " /><Run Text="{Binding UpdateVersion}" /><Run Text=" があります" />
+                                    </TextBlock>
+                                    <Button Classes="primary" Padding="10,4" FontSize="12" HorizontalAlignment="Left" Command="{Binding DownloadUpdateCommand}">ダウンロード</Button>
+                                </StackPanel>
+                                <StackPanel Spacing="6" IsVisible="{Binding IsUpdateDownloading}">
+                                    <TextBlock FontSize="12" FontWeight="SemiBold">
+                                        <Run Text="ダウンロード中… " /><Run Text="{Binding UpdateProgress}" /><Run Text="%" />
+                                    </TextBlock>
+                                    <ProgressBar Value="{Binding UpdateProgress}" Maximum="100" />
+                                </StackPanel>
+                                <StackPanel Spacing="6" IsVisible="{Binding IsUpdateReady}">
+                                    <TextBlock FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap">
+                                        <Run Text="バージョン " /><Run Text="{Binding UpdateVersion}" /><Run Text=" の準備ができました" />
+                                    </TextBlock>
+                                    <TextBlock Classes="caption" FontSize="11.5" TextWrapping="Wrap" Text="次にアプリを起動したときに反映されます。" />
+                                    <Button Classes="primary" Padding="10,4" FontSize="12" HorizontalAlignment="Left" Command="{Binding RestartToUpdateCommand}">今すぐ再起動</Button>
+                                </StackPanel>
+                                <StackPanel Spacing="6" IsVisible="{Binding IsUpdateError}">
+                                    <TextBlock FontSize="12" FontWeight="SemiBold" Text="更新をダウンロードできませんでした" />
+                                    <TextBlock Classes="caption" FontSize="11.5" TextWrapping="Wrap" Text="{Binding UpdateMessage}" />
+                                    <Button Classes="secondary" Padding="10,4" FontSize="12" HorizontalAlignment="Left" Command="{Binding DownloadUpdateCommand}">もう一度</Button>
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Grid.Column="2" Classes="ghost icon" Width="22" Height="22" VerticalAlignment="Top"
+                                    Command="{Binding DismissUpdateCommand}" IsVisible="{Binding !IsUpdateDownloading}">
+                                <c:Icon Kind="x" Width="12" Height="12" />
+                            </Button>
+                        </Grid>
+                    </Border>
 
                     <!-- 未調整のお知らせ -->
                     <Border DockPanel.Dock="Top" Margin="12,0,12,8" Padding="10,8" CornerRadius="{StaticResource RadiusL}"

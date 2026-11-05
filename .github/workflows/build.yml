@@ -1,0 +1,111 @@
+# v0.2.0 のようなタグを push すると、Windows / macOS 版を Velopack でパッケージにして GitHub Releases に公開する。
+# アプリはこのリリースを見て自動更新する（チャンネル: win / osx-arm64 / osx-x64）。
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  VPK_VERSION: "1.2.161"
+  REPO_URL: https://github.com/${{ github.repository }}
+
+jobs:
+  pack:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, rid: win-x64, channel: win }
+          - { os: macos-latest, rid: osx-arm64, channel: osx-arm64 }
+          - { os: macos-latest, rid: osx-x64, channel: osx-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Version
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV; else echo "VERSION=0.0.1-dev.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV; fi
+      - name: Publish
+        shell: bash
+        run: dotnet publish src/SeKurabe -c Release -r ${{ matrix.rid }} -p:Version=$VERSION -o publish
+      - name: Install vpk
+        run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
+      # 前のリリースを取ってくると、差分（delta）パッケージが作られて更新のダウンロードが小さくなる
+      - name: Download previous release
+        shell: bash
+        run: vpk download github --repoUrl $REPO_URL --channel ${{ matrix.channel }} --token ${{ secrets.GITHUB_TOKEN }} -o Releases || echo "前のリリースなし"
+      - name: Pack (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: >
+          vpk pack -u SeKurabe -v $VERSION -p publish -o Releases
+          --channel ${{ matrix.channel }} -r ${{ matrix.rid }}
+          -e SeKurabe.exe -i src/SeKurabe/Assets/SeKurabe.ico --packTitle SeKurabe
+      - name: Pack (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        # Apple の開発者証明書がないため、アドホック署名（-）で署名する
+        run: >
+          vpk pack -u SeKurabe -v $VERSION -p publish -o Releases
+          --channel ${{ matrix.channel }} -r ${{ matrix.rid }}
+          -e SeKurabe -i packaging/macos/SeKurabe.icns --packTitle SeKurabe
+          --bundleId io.github.rakkoyaku.sekurabe
+          --signAppIdentity "-" --signEntitlements packaging/macos/SeKurabe.entitlements
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Releases-${{ matrix.channel }}
+          path: Releases/
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Upload to GitHub Releases
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          for ch in win osx-arm64 osx-x64; do
+            vpk upload github --repoUrl $REPO_URL --token ${{ secrets.GITHUB_TOKEN }} \
+              -o artifacts/Releases-$ch --channel $ch \
+              --tag $GITHUB_REF_NAME --releaseName "SeKurabe $VERSION" --merge --publish
+          done
+      # CHANGELOG.md の「## vX.Y.Z」から次の「## 」までをリリースノートにし、ダウンロードの案内を付ける
+      - name: Release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          awk -v tag="## $GITHUB_REF_NAME" '
+            $0 == tag { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "変更点は CHANGELOG.md を参照してください。" > notes.md; fi
+          cat >> notes.md <<'EOF'
+
+          ---
+          ### ダウンロード
+          | OS | ファイル |
+          |---|---|
+          | Windows | `SeKurabe-win-Setup.exe`（インストール版）／ `SeKurabe-win-Portable.zip`（展開して使う版） |
+          | macOS（Apple Silicon） | `SeKurabe-osx-arm64-Portable.zip` |
+          | macOS（Intel） | `SeKurabe-osx-x64-Portable.zip` |
+
+          インストール済みのアプリは、アプリの中から更新できます。初めて開くときの注意は [README](https://github.com/${{ github.repository }}#ダウンロードとインストール) を見てください。
+          EOF
+          gh release edit "$GITHUB_REF_NAME" -R "${{ github.repository }}" --notes-file notes.md

@@ -1,0 +1,49 @@
+name: 不具合の報告
+description: うまく動かない・落ちる・表示がおかしいなど
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        報告ありがとうございます。わかる範囲で書いてください。
+        立ち絵などの画像を添付する場合は、公開しても問題ないものだけにしてください。
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きましたか
+      description: どの操作をしたときに、どうなったか
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 本来どうなってほしかったですか
+  - type: input
+    id: version
+    attributes:
+      label: SeKurabe のバージョン
+      description: ⓘ（ソフトウェア情報）に表示されています
+      placeholder: 例) 0.2.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS（Apple Silicon）
+        - macOS（Intel）
+        - その他
+    validations:
+      required: true
+  - type: textarea
+    id: crashlog
+    attributes:
+      label: crash.log（落ちた場合）
+      description: |
+        Windows: %APPDATA%\SeKurabe\crash.log
+        macOS: ~/.config/SeKurabe/crash.log
+        の中身を貼ってください（ファイルの場所に個人名が含まれる場合は伏せてください）。
+      render: text

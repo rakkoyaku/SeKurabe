@@ -159,6 +159,14 @@ public partial class MainWindow : Window, IDialogs
         await Vm.OpenPathsAsync(items.Select(i => i.TryGetLocalPath()).OfType<string>());
     }
 
+    // ---- ソフトウェア情報 ----
+
+    async void OnAbout(object? sender, RoutedEventArgs e)
+    {
+        var dlg = new AboutDialog { DataContext = DataContext };
+        await dlg.ShowDialog(this);
+    }
+
     // ---- 表示 ----
 
     void OnFit(object? sender, RoutedEventArgs e) { if (Vm?.IsCalibrate == true) Calib.FitToView(); else Stage.FitToView(); }

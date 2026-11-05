@@ -1,0 +1,142 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SeKurabe.ViewModels"
+        xmlns:c="using:SeKurabe.Controls"
+        x:Class="SeKurabe.Views.AboutDialog"
+        x:DataType="vm:MainViewModel"
+        Title="ソフトウェア情報"
+        Width="440" SizeToContent="Height"
+        CanResize="False" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Surface1}"
+        Foreground="{DynamicResource TextPrimary}"
+        FontSize="13">
+    <StackPanel Margin="28,28,28,22" Spacing="22">
+
+        <!-- アプリ -->
+        <StackPanel Spacing="10" HorizontalAlignment="Center">
+            <Image Source="/Assets/SeKurabe.ico" Width="72" Height="72" HorizontalAlignment="Center"
+                   RenderOptions.BitmapInterpolationMode="HighQuality" />
+            <TextBlock Text="SeKurabe" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" />
+            <TextBlock Classes="caption" Text="立ち絵を並べて、身長比較の画像を作る" HorizontalAlignment="Center"
+                       TextAlignment="Center" TextWrapping="Wrap" />
+            <TextBlock Classes="muted" Text="© 2026 rakkoyaku" HorizontalAlignment="Center" />
+            <Border Background="{DynamicResource Surface3}" CornerRadius="10" Padding="10,3" HorizontalAlignment="Center">
+                <TextBlock Classes="num" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondary}">
+                    <Run Text="バージョン " /><Run Text="{Binding AppVersion}" />
+                </TextBlock>
+            </Border>
+        </StackPanel>
+
+        <!-- アップデート -->
+        <Border Background="{DynamicResource Surface0}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1"
+                CornerRadius="{StaticResource RadiusL}" Padding="16,14">
+            <StackPanel Spacing="12">
+                <TextBlock Classes="section" Text="アップデート" Margin="0" />
+
+                <CheckBox IsChecked="{Binding CheckUpdatesOnStartup}" FontSize="12.5" IsVisible="{Binding CanCheckUpdates}">
+                    起動時に新しいバージョンを確認する
+                </CheckBox>
+
+                <!-- インストール版でないとき -->
+                <TextBlock Classes="caption" TextWrapping="Wrap" IsVisible="{Binding !CanCheckUpdates}"
+                           Text="この実行方法（開発中の実行や単体の exe）では自動アップデートを使えません。最新版はリリースのページから入手してください。" />
+
+                <!-- 状態 -->
+                <StackPanel Spacing="10" IsVisible="{Binding CanCheckUpdates}">
+                    <!-- 確認前・最新・確認失敗 -->
+                    <!-- 状態の文は折り返して、ボタンの下に潜り込まないようにする -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" IsVisible="{Binding !HasUpdateBanner}">
+                        <Panel VerticalAlignment="Center">
+                            <c:Icon Kind="check" Width="16" Height="16" Foreground="{DynamicResource Success}" IsVisible="{Binding IsUpToDate}" />
+                            <ProgressBar IsIndeterminate="True" Width="32" MinWidth="0" VerticalAlignment="Center" IsVisible="{Binding IsCheckingUpdates}" />
+                        </Panel>
+                        <Panel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,4,0">
+                            <TextBlock Classes="caption" TextWrapping="Wrap" Text="{Binding UpdateCheckResult}" IsVisible="{Binding !IsCheckingUpdates}" />
+                            <TextBlock Classes="caption" TextWrapping="Wrap" Text="確認しています…" IsVisible="{Binding IsCheckingUpdates}" />
+                        </Panel>
+                        <Button Grid.Column="2" Classes="secondary" Command="{Binding CheckUpdatesCommand}" IsEnabled="{Binding CanCheckNow}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <c:Icon Kind="refresh" Width="14" Height="14" />
+                                <TextBlock Text="アップデートを確認" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- 新しいバージョンあり -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsVisible="{Binding IsUpdateAvailable}">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold">
+                                <Run Text="新しいバージョン " /><Run Text="{Binding UpdateVersion}" /><Run Text=" があります" />
+                            </TextBlock>
+                            <TextBlock Classes="caption" Text="変わった部分だけをダウンロードします" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="primary" Command="{Binding DownloadUpdateCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <c:Icon Kind="download" Width="14" Height="14" />
+                                <TextBlock Text="ダウンロード" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <!-- ダウンロード中 -->
+                    <StackPanel Spacing="8" IsVisible="{Binding IsUpdateDownloading}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock FontWeight="SemiBold">
+                                <Run Text="バージョン " /><Run Text="{Binding UpdateVersion}" /><Run Text=" をダウンロード中…" />
+                            </TextBlock>
+                            <TextBlock Grid.Column="1" Classes="caption num">
+                                <Run Text="{Binding UpdateProgress}" /><Run Text="%" />
+                            </TextBlock>
+                        </Grid>
+                        <ProgressBar Value="{Binding UpdateProgress}" Maximum="100" />
+                    </StackPanel>
+
+                    <!-- 準備完了 -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsVisible="{Binding IsUpdateReady}">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" TextWrapping="Wrap">
+                                <Run Text="バージョン " /><Run Text="{Binding UpdateVersion}" /><Run Text=" の準備ができました" />
+                            </TextBlock>
+                            <TextBlock Classes="caption" TextWrapping="Wrap" Text="次にアプリを起動したときに反映されます" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="primary" Command="{Binding RestartToUpdateCommand}" IsEnabled="{Binding !IsBusy}">今すぐ再起動</Button>
+                    </Grid>
+
+                    <!-- 失敗 -->
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" IsVisible="{Binding IsUpdateError}">
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="ダウンロードできませんでした" Foreground="{DynamicResource Danger}" />
+                            <TextBlock Classes="caption" TextWrapping="Wrap" Text="{Binding UpdateMessage}" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="secondary" Command="{Binding DownloadUpdateCommand}">もう一度</Button>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- リンク・閉じる -->
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="2">
+            <Button Classes="ghost" Click="OnOpenRepo" Padding="8,6">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <c:Icon Kind="external" Width="14" Height="14" />
+                    <TextBlock Text="GitHub" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="1" Classes="ghost" Click="OnOpenReleases" Padding="8,6">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <c:Icon Kind="external" Width="14" Height="14" />
+                    <TextBlock Text="更新履歴" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="2" Classes="ghost" Click="OnLicenses" Padding="8,6" HorizontalAlignment="Left">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <c:Icon Kind="info" Width="14" Height="14" />
+                    <TextBlock Text="ライセンス" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="3" Classes="secondary" MinWidth="88" HorizontalContentAlignment="Center"
+                    IsCancel="True" IsDefault="True" Click="OnClose">閉じる</Button>
+        </Grid>
+    </StackPanel>
+</Window>

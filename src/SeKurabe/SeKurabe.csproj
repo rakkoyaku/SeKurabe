@@ -21,6 +21,10 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <!-- ライセンス表記（画面で表示し、配布物にも置く） -->
+    <None Include="Assets\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <AvaloniaResource Include="..\..\LICENSE" Link="Assets\LICENSE.txt" />
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

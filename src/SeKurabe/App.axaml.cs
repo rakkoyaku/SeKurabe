@@ -21,6 +21,12 @@ public partial class App : Application
                 desktop.MainWindow.Opened += (_, _) => _ = vm.OpenPathsAsync(args);
             else
                 desktop.MainWindow.Opened += (_, _) => _ = vm.RestoreLastAsync();
+            // 起動して少ししてから、裏で更新を確認する
+            desktop.MainWindow.Opened += async (_, _) =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(3));
+                await vm.CheckUpdatesOnStartupAsync();
+            };
         }
         base.OnFrameworkInitializationCompleted();
     }
