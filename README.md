@@ -18,7 +18,7 @@
 
 | OS | ファイル |
 |---|---|
-| Windows | `SeKurabe-win-Setup.exe`（インストール版）／ `SeKurabe-win-Portable.zip`（展開して使う版） |
+| Windows | `SeKurabe-win-Setup.exe`（インストール版）／ `SeKurabe-win-Portable.zip`（ポータブル版） |
 | macOS（Apple Silicon: M1 以降） | `SeKurabe-osx-arm64-Portable.zip` |
 | macOS（Intel） | `SeKurabe-osx-x64-Portable.zip` |
 
